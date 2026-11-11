@@ -1,0 +1,733 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="light" />
+    <meta name="theme-color" content="#3A101A" />
+    <link rel="icon" href="data:," />
+    <title>Nisa Silk Fab — Stock Panel</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Lora:wght@500;600;700&display=swap" rel="stylesheet" />
+    <style>
+      :root{
+        --maroon:#3A101A;
+        --maroon-deep:#2A0B13;
+        --gold:#C9A24B;
+        --gold-soft:#E7CF9A;
+        --cream:#F7EAD9;
+        --cream-dark:#EFDFC6;
+        --paper:#FFFDF8;
+        --ink:#2B1A1E;
+        --ink-soft:#5C4A4E;
+        --red:#B3261E;
+        --red-bg:#FBE9E7;
+        --green:#1E7B34;
+        --line:#DEC9A6;
+        --radius:14px;
+      }
+      *{ box-sizing:border-box; }
+      html{ -webkit-text-size-adjust:100%; }
+      body{
+        margin:0;
+        background:var(--cream);
+        color:var(--ink);
+        font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+        font-size:18px;
+        line-height:1.45;
+      }
+      button{ font-family:inherit; cursor:pointer; }
+      input{ font-family:inherit; }
+      :focus-visible{ outline:3px solid var(--gold); outline-offset:2px; }
+
+      /* ---------- Header ---------- */
+      header{
+        background:var(--maroon);
+        color:var(--cream);
+        border-bottom:4px solid var(--gold);
+        position:sticky; top:0; z-index:30;
+      }
+      .header-inner{
+        max-width:1100px; margin:0 auto;
+        padding:16px 16px 14px;
+        display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+      }
+      .brand{ flex:1 1 auto; min-width:200px; }
+      .brand h1{
+        font-family:"Lora",Georgia,serif;
+        font-size:clamp(24px,5.5vw,32px);
+        font-weight:700; margin:0; letter-spacing:.2px; line-height:1.15;
+      }
+      .brand p{ margin:2px 0 0; font-size:17px; color:var(--gold-soft); }
+      .count-pill{
+        background:rgba(201,162,75,.18);
+        border:1.5px solid var(--gold);
+        color:var(--cream);
+        border-radius:999px;
+        padding:8px 14px;
+        font-size:16px; font-weight:600;
+        white-space:nowrap;
+      }
+      .refresh-btn{
+        background:var(--gold); color:var(--maroon-deep);
+        border:none; border-radius:10px;
+        min-height:52px; padding:10px 20px;
+        font-size:18px; font-weight:700;
+        display:inline-flex; align-items:center; gap:8px;
+      }
+      .refresh-btn:active{ transform:scale(.97); }
+      .refresh-btn[disabled]{ opacity:.6; }
+
+      /* ---------- Controls ---------- */
+      .controls{
+        max-width:1100px; margin:0 auto;
+        padding:16px 16px 4px;
+      }
+      .search-wrap{ position:relative; }
+      .search-wrap svg{
+        position:absolute; left:16px; top:50%; transform:translateY(-50%);
+        width:24px; height:24px; color:var(--ink-soft); pointer-events:none;
+      }
+      #search{
+        width:100%;
+        min-height:58px;
+        font-size:19px;
+        padding:12px 16px 12px 50px;
+        border:2px solid var(--line);
+        border-radius:12px;
+        background:var(--paper);
+        color:var(--ink);
+      }
+      #search::placeholder{ color:#8A767B; }
+      .chips{ display:flex; gap:10px; margin-top:14px; flex-wrap:wrap; }
+      .chip{
+        flex:1 1 0;
+        min-height:54px;
+        border-radius:999px;
+        border:2px solid var(--maroon);
+        background:var(--paper);
+        color:var(--maroon);
+        font-size:18px; font-weight:700;
+        padding:10px 8px;
+      }
+      .chip[aria-pressed="true"]{ background:var(--maroon); color:var(--cream); }
+      .chip .n{ font-weight:600; opacity:.75; font-size:16px; }
+
+      /* ---------- Product grid ---------- */
+      main{ max-width:1100px; margin:0 auto; padding:16px; }
+      .grid{
+        display:grid; gap:16px;
+        grid-template-columns:1fr;
+      }
+      @media (min-width:600px){ .grid{ grid-template-columns:repeat(2,1fr); } }
+      @media (min-width:960px){ .grid{ grid-template-columns:repeat(3,1fr); } }
+
+      .card{
+        background:var(--paper);
+        border:1.5px solid var(--line);
+        border-radius:var(--radius);
+        overflow:hidden;
+        cursor:pointer;
+        text-align:left;
+        padding:0; width:100%;
+        display:block;
+        color:inherit;
+      }
+      .card:active{ transform:scale(.99); }
+      .card-photo{
+        display:block;
+        position:relative;
+        aspect-ratio:4/3;
+        background:var(--cream-dark);
+      }
+      .card-photo img{
+        width:100%; height:100%; object-fit:cover; display:block;
+      }
+      .no-photo{
+        width:100%; height:100%;
+        display:flex; align-items:center; justify-content:center;
+        color:var(--ink-soft); font-size:17px; font-weight:600;
+        background:repeating-linear-gradient(45deg,var(--cream-dark),var(--cream-dark) 14px,#E9D5B4 14px,#E9D5B4 28px);
+      }
+      .oos-band{
+        display:block;
+        position:absolute; left:0; right:0; bottom:0;
+        background:var(--red); color:#fff;
+        font-size:19px; font-weight:800; letter-spacing:1.5px;
+        text-align:center; padding:9px 6px;
+      }
+      .card-body{ display:block; padding:14px 16px 16px; }
+      .card-title{
+        display:block;
+        font-size:19px; font-weight:700; line-height:1.3; margin:0 0 6px;
+        display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
+      }
+      .card-colour{ display:block; font-size:17px; color:var(--ink-soft); margin:0 0 10px; }
+      .card-colour strong{ color:var(--ink); font-weight:600; }
+      .card-row{ display:flex; align-items:baseline; justify-content:space-between; gap:10px; }
+      .card-price{ font-size:24px; font-weight:800; color:var(--maroon); }
+      .card-price .mrp{ font-size:16px; font-weight:500; color:var(--ink-soft); text-decoration:line-through; margin-left:6px; }
+      .card-stock{ font-size:19px; font-weight:700; }
+      .card-stock.low{ color:var(--red); }
+      .card-flag{
+        display:inline-block; margin-top:10px;
+        background:#FBF0D3; border:1px solid var(--gold);
+        color:var(--maroon); border-radius:8px;
+        font-size:15px; font-weight:600; padding:4px 10px;
+      }
+
+      .empty-note{
+        text-align:center; padding:48px 20px; color:var(--ink-soft); font-size:19px;
+      }
+
+      /* ---------- Status screens ---------- */
+      .screen{
+        max-width:560px; margin:0 auto; padding:56px 24px; text-align:center;
+      }
+      .screen .big-emoji{ font-size:52px; line-height:1; }
+      .screen h2{
+        font-family:"Lora",Georgia,serif;
+        font-size:28px; margin:18px 0 10px; color:var(--maroon);
+      }
+      .screen p{ font-size:19px; color:var(--ink-soft); margin:0 0 24px; }
+      .spinner{
+        width:52px; height:52px; margin:0 auto;
+        border:6px solid var(--cream-dark); border-top-color:var(--maroon);
+        border-radius:50%; animation:spin 0.9s linear infinite;
+      }
+      @keyframes spin{ to{ transform:rotate(360deg); } }
+      @media (prefers-reduced-motion: reduce){
+        .spinner{ animation-duration:2.5s; }
+        .card:active,.refresh-btn:active{ transform:none; }
+      }
+      .big-btn{
+        background:var(--maroon); color:var(--cream);
+        border:none; border-radius:12px;
+        min-height:58px; padding:14px 32px;
+        font-size:20px; font-weight:700;
+      }
+
+      /* ---------- Detail view ---------- */
+      .detail{ max-width:680px; margin:0 auto; padding:16px 16px 48px; }
+      .back-btn{
+        background:none; border:none; color:var(--maroon);
+        font-size:19px; font-weight:700;
+        min-height:52px; padding:10px 8px 10px 0;
+        display:inline-flex; align-items:center; gap:6px;
+      }
+      .detail-photo{
+        border-radius:var(--radius); overflow:hidden;
+        border:1.5px solid var(--line); background:var(--cream-dark);
+        aspect-ratio:4/3;
+      }
+      .detail-photo img{ width:100%; height:100%; object-fit:cover; display:block; }
+      .detail h2{
+        font-family:"Lora",Georgia,serif;
+        font-size:26px; line-height:1.25; margin:18px 0 4px; color:var(--maroon);
+      }
+      .sku-line{ font-size:15px; color:var(--ink-soft); margin:0 0 6px; word-break:break-all; }
+      .amazon-ref{
+        font-size:16px; color:var(--ink-soft);
+        background:var(--cream-dark); border-radius:10px;
+        padding:10px 14px; margin:12px 0 22px;
+      }
+      .panel{
+        background:var(--paper); border:1.5px solid var(--line);
+        border-radius:var(--radius); padding:20px 16px; margin-bottom:16px;
+      }
+      .panel label, .panel .panel-label{
+        display:block; font-size:19px; font-weight:700; color:var(--maroon); margin-bottom:12px;
+      }
+      .stepper{ display:flex; align-items:stretch; gap:10px; }
+      .step-btn{
+        flex:0 0 72px; min-height:68px;
+        font-size:34px; font-weight:700; line-height:1;
+        background:var(--maroon); color:var(--cream);
+        border:none; border-radius:12px;
+      }
+      .step-btn:active{ background:var(--maroon-deep); }
+      #stockInput{
+        flex:1 1 auto; min-width:0;
+        min-height:68px;
+        font-size:30px; font-weight:800; text-align:center;
+        border:2px solid var(--line); border-radius:12px;
+        background:#fff; color:var(--ink);
+        -moz-appearance:textfield; appearance:textfield;
+      }
+      #stockInput::-webkit-outer-spin-button,#stockInput::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0; }
+
+      .toggle-row{
+        display:flex; align-items:center; justify-content:space-between; gap:16px;
+      }
+      .toggle-text{ font-size:19px; font-weight:700; color:var(--maroon); }
+      .toggle-state{ display:block; font-size:16px; font-weight:600; color:var(--ink-soft); margin-top:2px; }
+      .toggle-state.on{ color:var(--red); }
+      .switch-btn{
+        flex:0 0 auto; width:88px; height:52px;
+        border:none; border-radius:999px; padding:0;
+        background:#C9BBA8; position:relative;
+        transition:background .15s ease;
+      }
+      .switch-btn .knob{
+        position:absolute; top:5px; left:5px;
+        width:42px; height:42px; border-radius:50%;
+        background:#fff; box-shadow:0 1px 4px rgba(0,0,0,.35);
+        transition:left .15s ease;
+      }
+      .switch-btn[aria-checked="true"]{ background:var(--red); }
+      .switch-btn[aria-checked="true"] .knob{ left:41px; }
+
+      #colourInput{
+        width:100%; min-height:60px;
+        font-size:20px; padding:12px 14px;
+        border:2px solid var(--line); border-radius:12px;
+        background:#fff; color:var(--ink);
+      }
+      .save-btn{
+        width:100%; min-height:64px;
+        background:var(--gold); color:var(--maroon-deep);
+        border:none; border-radius:12px;
+        font-size:22px; font-weight:800;
+        margin-top:6px;
+      }
+      .save-btn[disabled]{ opacity:.65; }
+      .save-btn.saved{ background:var(--green); color:#fff; }
+      .save-btn.failed{ background:var(--red); color:#fff; }
+      .save-note{ text-align:center; font-size:17px; min-height:24px; margin:12px 0 0; color:var(--ink-soft); }
+      .save-note.err{ color:var(--red); font-weight:700; }
+
+      [hidden]{ display:none !important; }
+    </style>
+  </head>
+  <body>
+
+    <!-- Setup screen: shown until the connection key is added -->
+    <section id="setupScreen" class="screen" hidden>
+      <div class="big-emoji" aria-hidden="true">🧵</div>
+      <h2>Setup is almost done</h2>
+      <p>Setup is almost done — this page is waiting for its connection key. Please check back in a little while.</p>
+    </section>
+
+    <!-- Loading screen -->
+    <section id="loadingScreen" class="screen" hidden>
+      <div class="spinner" role="status" aria-label="Loading"></div>
+      <h2>Loading products…</h2>
+      <p>Getting the latest stock list.</p>
+    </section>
+
+    <!-- Error screen -->
+    <section id="errorScreen" class="screen" hidden>
+      <div class="big-emoji" aria-hidden="true">🌧️</div>
+      <h2>Couldn’t load the products</h2>
+      <p>The list didn’t come through. Please check your internet connection and try again.</p>
+      <button class="big-btn" id="retryBtn" type="button">Try again</button>
+    </section>
+
+    <!-- List view -->
+    <div id="listView" hidden>
+      <header>
+        <div class="header-inner">
+          <div class="brand">
+            <h1>Nisa Silk Fab</h1>
+            <p>Stock Panel</p>
+          </div>
+          <span class="count-pill" id="countPill">… products</span>
+          <button class="refresh-btn" id="refreshBtn" type="button" aria-label="Refresh product list">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>
+            Refresh
+          </button>
+        </div>
+      </header>
+
+      <div class="controls">
+        <div class="search-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+          <input id="search" type="search" inputmode="search" placeholder="Search by name, colour or code…" aria-label="Search products" />
+        </div>
+        <div class="chips" role="group" aria-label="Show">
+          <button class="chip" type="button" data-filter="all" aria-pressed="true">All <span class="n" id="nAll"></span></button>
+          <button class="chip" type="button" data-filter="in" aria-pressed="false">In stock <span class="n" id="nIn"></span></button>
+          <button class="chip" type="button" data-filter="out" aria-pressed="false">Out of stock <span class="n" id="nOut"></span></button>
+        </div>
+      </div>
+
+      <main>
+        <div class="grid" id="grid"></div>
+        <p class="empty-note" id="emptyNote" hidden>No products match. Try a different search.</p>
+      </main>
+    </div>
+
+    <!-- Detail view -->
+    <div id="detailView" hidden>
+      <header>
+        <div class="header-inner">
+          <div class="brand">
+            <h1>Nisa Silk Fab</h1>
+            <p>Stock Panel</p>
+          </div>
+        </div>
+      </header>
+      <div class="detail">
+        <button class="back-btn" id="backBtn" type="button">← All products</button>
+        <div class="detail-photo" id="detailPhoto"></div>
+        <h2 id="detailTitle"></h2>
+        <p class="sku-line" id="detailSku"></p>
+        <p class="amazon-ref" id="amazonRef"></p>
+
+        <div class="panel">
+          <span class="panel-label" id="stockLabel">Stock — how many do we have?</span>
+          <div class="stepper">
+            <button class="step-btn" id="minusBtn" type="button" aria-label="One less">−</button>
+            <input id="stockInput" type="number" inputmode="numeric" min="0" step="1" aria-labelledby="stockLabel" />
+            <button class="step-btn" id="plusBtn" type="button" aria-label="One more">+</button>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="toggle-row">
+            <span class="toggle-text" id="oosLabel">
+              Out of stock
+              <span class="toggle-state" id="oosState">We have this in stock</span>
+            </span>
+            <button type="button" class="switch-btn" id="oosToggle" role="switch" aria-checked="false" aria-labelledby="oosLabel">
+              <span class="knob" aria-hidden="true"></span>
+            </button>
+          </div>
+        </div>
+
+        <div class="panel">
+          <label for="colourInput">Colour (correct)</label>
+          <input id="colourInput" type="text" autocomplete="off" />
+        </div>
+
+        <button class="save-btn" id="saveBtn" type="button">Save changes</button>
+        <p class="save-note" id="saveNote" role="status" aria-live="polite"></p>
+      </div>
+    </div>
+
+    <script>
+      // ============================================================
+      //  Nisa bridge connection.
+      //  BRIDGE_URL is filled in once the Google Apps Script bridge
+      //  is deployed (the owner does that one 5-minute Google step).
+      //  Until then the page shows a friendly "setup almost done"
+      //  note instead of a broken list.
+      // ============================================================
+      const BRIDGE_URL = "https://script.google.com/macros/s/AKfycbw4wJ_q2rg1rkVzs2zehDl3d9peQx3aneZhGotZ5ooFzwLB7b9nWZHoY6tHWoqFV1o6HA/exec";
+      const BRIDGE_KEY = "nisa-4867485ee82f0adc9e8d3ded";
+
+      var products = [];
+      var currentFilter = "all";
+      var currentSku = null;
+      var oosOn = false;
+      var saveState = "idle"; // idle | saving | saved | failed
+
+      var $ = function (id) { return document.getElementById(id); };
+
+      function esc(s) {
+        return String(s == null ? "" : s)
+          .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+      }
+      function num(v, fallback) {
+        var n = parseInt(v, 10);
+        return isNaN(n) ? (fallback || 0) : n;
+      }
+      function money(v) {
+        if (v === "" || v === null || v === undefined) return "";
+        var n = Number(String(v).replace(/[^0-9.]/g, ""));
+        if (isNaN(n)) return esc(v);
+        return "₹" + n.toLocaleString("en-IN");
+      }
+      function isOut(p) {
+        if (p.outOfStock === true || p.outOfStock === "true") return true;
+        return num(p.stockTrue) <= 0;
+      }
+      function flagText(p) {
+        if (!p.flags) return "";
+        if (Array.isArray(p.flags)) return p.flags.filter(Boolean).join(" · ");
+        return String(p.flags);
+      }
+      function bridgeReady() {
+        return BRIDGE_URL && BRIDGE_URL !== "REPLACE_WITH_BRIDGE_URL" && /^https?:\/\//.test(BRIDGE_URL);
+      }
+      function listUrl() {
+        return BRIDGE_URL + "?key=" + encodeURIComponent(BRIDGE_KEY) + "&action=list";
+      }
+
+      function showOnly(id) {
+        ["setupScreen", "loadingScreen", "errorScreen", "listView", "detailView"].forEach(function (s) {
+          $(s).hidden = (s !== id);
+        });
+        window.scrollTo(0, 0);
+      }
+
+      /* ---------------- Load ---------------- */
+      function fetchList() {
+        return fetch(listUrl(), { method: "GET" })
+          .then(function (r) {
+            if (!r.ok) throw new Error("HTTP " + r.status);
+            return r.json();
+          })
+          .then(function (data) {
+            if (!data || data.ok !== true || !Array.isArray(data.products)) {
+              throw new Error("Bad response");
+            }
+            return data.products;
+          });
+      }
+
+      function loadProducts(first) {
+        if (first) showOnly("loadingScreen");
+        var btn = $("refreshBtn");
+        if (btn) btn.disabled = true;
+        fetchList()
+          .then(function (list) {
+            products = list;
+            if (btn) btn.disabled = false;
+            showOnly("listView");
+            renderList();
+          })
+          .catch(function () {
+            if (btn) btn.disabled = false;
+            if (first || $("listView").hidden) showOnly("errorScreen");
+          });
+      }
+
+      /* ---------------- List ---------------- */
+      function visibleProducts() {
+        var q = $("search").value.trim().toLowerCase();
+        return products.filter(function (p) {
+          if (currentFilter === "in" && isOut(p)) return false;
+          if (currentFilter === "out" && !isOut(p)) return false;
+          if (q) {
+            var hay = [p.title, p.colourTrue, p.colourAmazon, p.sku]
+              .join(" ").toLowerCase();
+            if (hay.indexOf(q) === -1) return false;
+          }
+          return true;
+        });
+      }
+
+      function renderList() {
+        var total = products.length;
+        var outCount = products.filter(isOut).length;
+        $("countPill").textContent = total + (total === 1 ? " product" : " products");
+        $("nAll").textContent = "(" + total + ")";
+        $("nIn").textContent = "(" + (total - outCount) + ")";
+        $("nOut").textContent = "(" + outCount + ")";
+
+        document.querySelectorAll(".chip").forEach(function (c) {
+          c.setAttribute("aria-pressed", c.getAttribute("data-filter") === currentFilter ? "true" : "false");
+        });
+
+        var list = visibleProducts();
+        $("emptyNote").hidden = list.length > 0;
+        $("grid").innerHTML = list.map(function (p) {
+          var out = isOut(p);
+          var stock = num(p.stockTrue);
+          var flag = flagText(p);
+          var photo = p.image
+            ? '<img src="' + esc(p.image) + '" alt="" loading="lazy" onerror="this.parentNode.innerHTML=\'<div class=&quot;no-photo&quot;>No photo</div>\'" />'
+            : '<div class="no-photo">No photo</div>';
+          return '' +
+            '<button class="card" type="button" data-sku="' + esc(p.sku) + '" aria-label="' + esc(p.title) + '">' +
+              '<span class="card-photo">' + photo +
+                (out ? '<span class="oos-band">OUT OF STOCK</span>' : '') +
+              '</span>' +
+              '<span class="card-body">' +
+                '<span class="card-title">' + esc(p.title) + '</span>' +
+                '<span class="card-colour">Colour: <strong>' + esc(p.colourTrue || p.colourAmazon || "—") + '</strong></span>' +
+                '<span class="card-row">' +
+                  '<span class="card-price">' + money(p.price) +
+                    (p.mrp && Number(String(p.mrp).replace(/[^0-9.]/g, "")) > Number(String(p.price).replace(/[^0-9.]/g, "")) ? '<span class="mrp">' + money(p.mrp) + '</span>' : '') +
+                  '</span>' +
+                  (out
+                    ? '<span class="card-stock low">Out of stock</span>'
+                    : '<span class="card-stock">Stock: ' + stock + '</span>') +
+                '</span>' +
+                (flag ? '<span class="card-flag">' + esc(flag) + '</span>' : '') +
+              '</span>' +
+            '</button>';
+        }).join("");
+
+        document.querySelectorAll(".card").forEach(function (card) {
+          card.addEventListener("click", function () {
+            openDetail(card.getAttribute("data-sku"));
+          });
+        });
+      }
+
+      /* ---------------- Detail ---------------- */
+      function findProduct(sku) {
+        for (var i = 0; i < products.length; i++) {
+          if (products[i].sku === sku) return products[i];
+        }
+        return null;
+      }
+
+      function openDetail(sku) {
+        var p = findProduct(sku);
+        if (!p) return;
+        currentSku = sku;
+        setSaveState("idle");
+
+        $("detailPhoto").innerHTML = p.image
+          ? '<img src="' + esc(p.image) + '" alt="' + esc(p.title) + '" onerror="this.parentNode.innerHTML=\'<div class=&quot;no-photo&quot; style=&quot;height:100%&quot;>No photo</div>\'" />'
+          : '<div class="no-photo" style="height:100%">No photo</div>';
+        $("detailTitle").textContent = p.title || "";
+        $("detailSku").textContent = "Code: " + (p.sku || "");
+        $("amazonRef").textContent = "Amazon shows: stock " + num(p.stockAmazon) + " · " + (money(p.price) || "—") +
+          (p.colourAmazon ? " · Colour: " + p.colourAmazon : "");
+
+        $("stockInput").value = num(p.stockTrue);
+        $("colourInput").value = p.colourTrue || p.colourAmazon || "";
+        setOos(isOut(p));
+        showOnly("detailView");
+      }
+
+      function setOos(on) {
+        oosOn = !!on;
+        $("oosToggle").setAttribute("aria-checked", oosOn ? "true" : "false");
+        syncToggleLabel();
+      }
+
+      function syncToggleLabel() {
+        var on = oosOn;
+        var el = $("oosState");
+        el.textContent = on ? "Marked out of stock" : "We have this in stock";
+        el.className = "toggle-state" + (on ? " on" : "");
+      }
+
+      // Keep stock number and out-of-stock toggle consistent:
+      // toggle ON -> stock 0; stock above 0 -> toggle OFF; stock 0 -> toggle ON.
+      function setStock(n) {
+        n = Math.max(0, num(n));
+        $("stockInput").value = n;
+        setOos(n === 0);
+        markDirty();
+      }
+
+      function markDirty() {
+        if (saveState === "saved" || saveState === "failed") setSaveState("idle");
+        else if (saveState === "idle") setSaveState("idle");
+      }
+
+      function setSaveState(state) {
+        saveState = state;
+        var btn = $("saveBtn");
+        var note = $("saveNote");
+        btn.className = "save-btn";
+        note.className = "save-note";
+        if (state === "saving") {
+          btn.disabled = true;
+          btn.textContent = "Saving…";
+          note.textContent = "Saving and checking…";
+        } else if (state === "saved") {
+          btn.disabled = false;
+          btn.classList.add("saved");
+          btn.textContent = "Saved ✓";
+          note.textContent = "Your change is saved.";
+        } else if (state === "failed") {
+          btn.disabled = false;
+          btn.classList.add("failed");
+          btn.textContent = "Not saved — tap to retry";
+          note.className = "save-note err";
+          note.textContent = "That didn’t save. Please tap the button to try again.";
+        } else {
+          btn.disabled = false;
+          btn.textContent = "Save changes";
+          note.textContent = "";
+        }
+      }
+
+      /* ---------------- Save (with honest verification) ---------------- */
+      function saveProduct() {
+        var p = findProduct(currentSku);
+        if (!p || saveState === "saving") return;
+
+        var stock = Math.max(0, num($("stockInput").value));
+        var colour = $("colourInput").value.trim();
+        var oos = oosOn || stock === 0;
+
+        setSaveState("saving");
+
+        var url = BRIDGE_URL +
+          "?key=" + encodeURIComponent(BRIDGE_KEY) +
+          "&action=update" +
+          "&sku=" + encodeURIComponent(p.sku) +
+          "&stockTrue=" + encodeURIComponent(stock) +
+          "&colourTrue=" + encodeURIComponent(colour) +
+          "&outOfStock=" + (oos ? "true" : "false");
+
+        // Fire the update. Google may redirect the write, making its own
+        // response unreadable — so we never trust it. We verify below by
+        // re-reading the list and checking the values really changed.
+        var fired = fetch(url, { method: "GET" }).then(function () { return true; }, function () { return false; });
+
+        fired.then(function () {
+          return fetchList();
+        }).then(function (fresh) {
+          products = fresh;
+          var updated = findProduct(p.sku);
+          var ok = false;
+          if (updated) {
+            var stockOk = num(updated.stockTrue) === stock;
+            var oosOk = isOut(updated) === oos;
+            var colourOk = String(updated.colourTrue || "").trim().toLowerCase() === colour.toLowerCase();
+            ok = stockOk && oosOk && colourOk;
+          }
+          if (ok) {
+            setSaveState("saved");
+            renderList();
+          } else {
+            setSaveState("failed");
+          }
+        }).catch(function () {
+          setSaveState("failed");
+        });
+      }
+
+      /* ---------------- Wiring ---------------- */
+      document.querySelectorAll(".chip").forEach(function (c) {
+        c.addEventListener("click", function () {
+          currentFilter = c.getAttribute("data-filter");
+          renderList();
+        });
+      });
+      $("search").addEventListener("input", renderList);
+      $("refreshBtn").addEventListener("click", function () { loadProducts(false); });
+      $("retryBtn").addEventListener("click", function () { loadProducts(true); });
+      $("backBtn").addEventListener("click", function () {
+        currentSku = null;
+        showOnly("listView");
+        renderList();
+      });
+      $("minusBtn").addEventListener("click", function () { setStock(num($("stockInput").value) - 1); });
+      $("plusBtn").addEventListener("click", function () { setStock(num($("stockInput").value) + 1); });
+      $("stockInput").addEventListener("input", function () {
+        var v = $("stockInput").value;
+        if (v === "") { markDirty(); return; }
+        var n = Math.max(0, num(v));
+        setOos(n === 0);
+        markDirty();
+      });
+      $("stockInput").addEventListener("change", function () { setStock(num($("stockInput").value)); });
+      $("oosToggle").addEventListener("click", function () {
+        setOos(!oosOn);
+        if (oosOn) $("stockInput").value = 0;
+        markDirty();
+      });
+      $("colourInput").addEventListener("input", markDirty);
+      $("saveBtn").addEventListener("click", saveProduct);
+
+      /* ---------------- Start ---------------- */
+      if (!bridgeReady()) {
+        showOnly("setupScreen");
+      } else {
+        loadProducts(true);
+      }
+    </script>
+  </body>
+</html>
