@@ -207,6 +207,39 @@
         min-height:58px; padding:14px 32px;
         font-size:20px; font-weight:700;
       }
+      .big-btn[disabled]{ opacity:.65; }
+
+      /* ---------- Lock screen ---------- */
+      .lock-brand{
+        font-family:"Lora",Georgia,serif;
+        font-size:clamp(28px,7vw,36px);
+        font-weight:700; color:var(--maroon);
+        margin:18px 0 6px; line-height:1.15;
+      }
+      .lock-form{ text-align:left; margin-top:8px; }
+      .lock-label{
+        display:block; font-size:20px; font-weight:700;
+        color:var(--maroon); margin-bottom:12px; text-align:center;
+      }
+      #pinInput{
+        width:100%; min-height:72px;
+        font-size:34px; font-weight:800; text-align:center;
+        letter-spacing:6px;
+        border:2px solid var(--line); border-radius:12px;
+        background:#fff; color:var(--ink);
+        -moz-appearance:textfield; appearance:textfield;
+        margin-bottom:16px;
+      }
+      #pinInput::-webkit-outer-spin-button,#pinInput::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0; }
+      .lock-open-btn{ width:100%; min-height:64px; font-size:22px; }
+      .lock-error{
+        font-size:21px; font-weight:700; color:var(--red);
+        text-align:center; margin:18px 0 0; line-height:1.35;
+      }
+      .lock-note{
+        font-size:17px; color:var(--ink-soft);
+        text-align:center; margin:16px 0 0;
+      }
 
       /* ---------- Detail view ---------- */
       .detail{ max-width:680px; margin:0 auto; padding:16px 16px 48px; }
@@ -307,6 +340,20 @@
       <div class="big-emoji" aria-hidden="true">🧵</div>
       <h2>Setup is almost done</h2>
       <p>Setup is almost done — this page is waiting for its connection key. Please check back in a little while.</p>
+    </section>
+
+    <!-- Lock screen: shown until the correct PIN code is entered -->
+    <section id="lockScreen" class="screen" hidden>
+      <div class="big-emoji" aria-hidden="true">🔒</div>
+      <h2 class="lock-brand">Nisa Silk Fab</h2>
+      <p>Stock Panel</p>
+      <form class="lock-form" id="lockForm" novalidate>
+        <label class="lock-label" for="pinInput">Enter your code</label>
+        <input id="pinInput" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" autocapitalize="off" spellcheck="false" aria-describedby="lockError" />
+        <button class="big-btn lock-open-btn" id="unlockBtn" type="submit">Open</button>
+        <p class="lock-error" id="lockError" role="alert" aria-live="polite" hidden></p>
+        <p class="lock-note">You only need to enter this once — this phone will remember it.</p>
+      </form>
     </section>
 
     <!-- Loading screen -->
@@ -415,7 +462,8 @@
       //  note instead of a broken list.
       // ============================================================
       const BRIDGE_URL = "https://script.google.com/macros/s/AKfycbw4wJ_q2rg1rkVzs2zehDl3d9peQx3aneZhGotZ5ooFzwLB7b9nWZHoY6tHWoqFV1o6HA/exec";
-      const BRIDGE_KEY = "nisa-4867485ee82f0adc9e8d3ded";
+      const BRIDGE_KEY = "nisa-69941e42872287c275c4bfeb";
+      const PIN_STORAGE_KEY = "nisaPanelPin";
 
       var products = [];
       var currentFilter = "all";
@@ -452,26 +500,80 @@
       function bridgeReady() {
         return BRIDGE_URL && BRIDGE_URL !== "REPLACE_WITH_BRIDGE_URL" && /^https?:\/\//.test(BRIDGE_URL);
       }
-      function listUrl() {
-        return BRIDGE_URL + "?key=" + encodeURIComponent(BRIDGE_KEY) + "&action=list";
+      function getSavedPin() {
+        try { return localStorage.getItem(PIN_STORAGE_KEY) || ""; } catch (e) { return ""; }
+      }
+      function savePin(pin) {
+        try { localStorage.setItem(PIN_STORAGE_KEY, pin); } catch (e) {}
+      }
+      function clearSavedPin() {
+        try { localStorage.removeItem(PIN_STORAGE_KEY); } catch (e) {}
+      }
+      function lockedError() {
+        var err = new Error("locked");
+        err.locked = true;
+        return err;
+      }
+      function isLockedResponse(data) {
+        if (!data) return false;
+        if (data.locked === true) return true;
+        var msg = String(data.error || data.message || data.status || "").toLowerCase();
+        return /pin|lock|code|unauthor|forbidden|invalid|denied/.test(msg);
+      }
+      function listUrl(pinOverride) {
+        var pin = pinOverride !== undefined ? pinOverride : getSavedPin();
+        return BRIDGE_URL + "?key=" + encodeURIComponent(BRIDGE_KEY) +
+          "&pin=" + encodeURIComponent(pin) + "&action=list";
       }
 
       function showOnly(id) {
-        ["setupScreen", "loadingScreen", "errorScreen", "listView", "detailView"].forEach(function (s) {
+        ["setupScreen", "lockScreen", "loadingScreen", "errorScreen", "listView", "detailView"].forEach(function (s) {
           $(s).hidden = (s !== id);
         });
         window.scrollTo(0, 0);
       }
 
+      function showLock(message) {
+        var errEl = $("lockError");
+        if (message) {
+          errEl.textContent = message;
+          errEl.hidden = false;
+        } else {
+          errEl.textContent = "";
+          errEl.hidden = true;
+        }
+        var btn = $("unlockBtn");
+        btn.disabled = false;
+        btn.textContent = "Open";
+        showOnly("lockScreen");
+        setTimeout(function () {
+          var input = $("pinInput");
+          if (input) input.focus();
+        }, 50);
+      }
+
+      function returnToLock() {
+        clearSavedPin();
+        products = [];
+        currentSku = null;
+        $("pinInput").value = "";
+        showLock("");
+      }
+
       /* ---------------- Load ---------------- */
-      function fetchList() {
-        return fetch(listUrl(), { method: "GET" })
+      function fetchList(pinOverride) {
+        return fetch(listUrl(pinOverride), { method: "GET" })
           .then(function (r) {
+            if (r.status === 401 || r.status === 403) throw lockedError();
             if (!r.ok) throw new Error("HTTP " + r.status);
             return r.json();
           })
           .then(function (data) {
             if (!data || data.ok !== true || !Array.isArray(data.products)) {
+              if (isLockedResponse(data)) throw lockedError();
+              // During an unlock attempt any non-ok bridge answer means
+              // the code was not accepted.
+              if (pinOverride !== undefined) throw lockedError();
               throw new Error("Bad response");
             }
             return data.products;
@@ -479,6 +581,7 @@
       }
 
       function loadProducts(first) {
+        if (!getSavedPin()) { showLock(""); return; }
         if (first) showOnly("loadingScreen");
         var btn = $("refreshBtn");
         if (btn) btn.disabled = true;
@@ -489,9 +592,49 @@
             showOnly("listView");
             renderList();
           })
-          .catch(function () {
+          .catch(function (err) {
             if (btn) btn.disabled = false;
+            if (err && err.locked) { returnToLock(); return; }
             if (first || $("listView").hidden) showOnly("errorScreen");
+          });
+      }
+
+      /* ---------------- Unlock ---------------- */
+      var unlocking = false;
+      function tryUnlock() {
+        if (unlocking) return;
+        var pin = $("pinInput").value.trim();
+        var errEl = $("lockError");
+        if (!pin) {
+          errEl.textContent = "Please enter your code.";
+          errEl.hidden = false;
+          return;
+        }
+        unlocking = true;
+        var btn = $("unlockBtn");
+        btn.disabled = true;
+        btn.textContent = "Opening…";
+        errEl.textContent = "";
+        errEl.hidden = true;
+        fetchList(pin)
+          .then(function (list) {
+            unlocking = false;
+            savePin(pin);
+            products = list;
+            showOnly("listView");
+            renderList();
+          })
+          .catch(function (err) {
+            unlocking = false;
+            btn.disabled = false;
+            btn.textContent = "Open";
+            if (err && err.locked) {
+              errEl.textContent = "Wrong code — please try again";
+            } else {
+              errEl.textContent = "Couldn’t connect — please check your internet and try again.";
+            }
+            errEl.hidden = false;
+            $("pinInput").select();
           });
       }
 
@@ -655,6 +798,7 @@
 
         var url = BRIDGE_URL +
           "?key=" + encodeURIComponent(BRIDGE_KEY) +
+          "&pin=" + encodeURIComponent(getSavedPin()) +
           "&action=update" +
           "&sku=" + encodeURIComponent(p.sku) +
           "&stockTrue=" + encodeURIComponent(stock) +
@@ -684,7 +828,8 @@
           } else {
             setSaveState("failed");
           }
-        }).catch(function () {
+        }).catch(function (err) {
+          if (err && err.locked) { returnToLock(); return; }
           setSaveState("failed");
         });
       }
@@ -721,10 +866,21 @@
       });
       $("colourInput").addEventListener("input", markDirty);
       $("saveBtn").addEventListener("click", saveProduct);
+      $("lockForm").addEventListener("submit", function (e) {
+        e.preventDefault();
+        tryUnlock();
+      });
+      $("pinInput").addEventListener("input", function () {
+        var errEl = $("lockError");
+        errEl.textContent = "";
+        errEl.hidden = true;
+      });
 
       /* ---------------- Start ---------------- */
       if (!bridgeReady()) {
         showOnly("setupScreen");
+      } else if (!getSavedPin()) {
+        showLock("");
       } else {
         loadProducts(true);
       }
